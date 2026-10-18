@@ -1,0 +1,331 @@
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #e0f7fa, #f3e5f5, #fff0e6);
+    color: #263238;
+    min-height: 100vh;
+    line-height: 1.6;
+}
+
+header {
+    background: linear-gradient(135deg, #6c63ff, #a855f7, #ec4899);
+    color: white;
+    text-align: center;
+    padding: 30px 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+header h1 {
+    font-size: 32px;
+    margin-bottom: 8px;
+}
+
+header p {
+    margin-bottom: 18px;
+}
+
+/* NAVIGATION MENU */
+nav {
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 20px;
+    padding: 15px;
+    background: transparent;
+}
+
+nav a {
+    display: inline-block;
+    color: #4c2da8 !important;
+    background: #ffffff !important;
+    text-decoration: none !important;
+    padding: 10px 16px;
+    border: 2px solid #e5ddff;
+    border-radius: 12px;
+    font-weight: bold;
+    font-size: 15px;
+    transition: 0.3s;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+nav a:hover {
+    background: #6741d9 !important;
+    color: #ffffff !important;
+    border-color: #6741d9;
+    transform: translateY(-2px);
+}
+
+nav a:visited {
+    color: #4c2da8 !important;
+}
+
+nav a:hover:visited {
+    color: #ffffff !important;
+}
+
+.container,
+main {
+    width: 90%;
+    max-width: 1100px;
+    margin: 30px auto;
+}
+
+.hero {
+    background: linear-gradient(135deg, #ffffff, #e9d5ff);
+    padding: 35px 25px;
+    text-align: center;
+    border-radius: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 5px 18px rgba(108, 99, 255, 0.12);
+}
+
+.hero h2 {
+    color: #6c3bd1;
+    font-size: 28px;
+    margin-bottom: 12px;
+}
+
+h2 {
+    color: #6c3bd1;
+    margin-bottom: 15px;
+}
+
+h3 {
+    color: #7c3aed;
+    margin-bottom: 10px;
+}
+
+p {
+    margin-bottom: 12px;
+}
+
+.card,
+.lesson,
+.question-card,
+.progress-container,
+.chat-container {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 24px;
+    border-radius: 18px;
+    margin-bottom: 22px;
+    box-shadow: 0 5px 18px rgba(50, 40, 100, 0.10);
+    border: 1px solid #e9ddff;
+}
+
+.card:hover,
+.lesson:hover {
+    transform: translateY(-3px);
+    transition: 0.3s;
+}
+
+.cards,
+.progress-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    margin: 25px 0;
+}
+
+.cards .card,
+.progress-cards .card {
+    margin-bottom: 0;
+    text-align: center;
+}
+
+.progress-cards .card p {
+    font-size: 34px;
+    font-weight: bold;
+    color: #9333ea;
+    margin: 10px 0;
+}
+
+button,
+.btn {
+    display: inline-block;
+    background: linear-gradient(135deg, #7c3aed, #ec4899);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    padding: 12px 22px;
+    margin: 8px 5px 8px 0;
+    font-size: 15px;
+    font-weight: bold;
+    text-decoration: none;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover,
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(124, 58, 237, 0.25);
+}
+
+button:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+}
+
+button[hidden] {
+    display: none !important;
+}
+
+input[type="text"] {
+    width: 100%;
+    padding: 13px;
+    border: 2px solid #ddd6fe;
+    border-radius: 12px;
+    margin: 10px 0;
+    font-size: 16px;
+}
+
+input[type="radio"] {
+    margin-right: 8px;
+    accent-color: #8b5cf6;
+}
+
+label {
+    display: inline-block;
+    margin: 8px 0;
+    cursor: pointer;
+}
+
+#chat-messages {
+    min-height: 200px;
+    max-height: 350px;
+    overflow-y: auto;
+    padding: 15px;
+    background: #f5f3ff;
+    border-radius: 15px;
+    margin-bottom: 15px;
+}
+
+.message {
+    padding: 12px 15px;
+    border-radius: 15px;
+    margin: 10px 0;
+    max-width: 85%;
+    overflow-wrap: anywhere;
+}
+
+.user-message {
+    background: #ddd6fe;
+    margin-left: auto;
+    text-align: right;
+}
+
+.bot-message {
+    background: #d1fae5;
+    margin-right: auto;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 22px;
+    background: #e5e7eb;
+    border-radius: 20px;
+    overflow: hidden;
+    margin: 15px 0;
+}
+
+.progress-fill {
+    width: 0;
+    height: 100%;
+    background: linear-gradient(90deg, #8b5cf6, #ec4899);
+    border-radius: 20px;
+    transition: width 0.5s ease;
+}
+
+#quiz-result,
+#challenge-result {
+    display: none;
+    padding: 15px;
+    background: #d1fae5;
+    color: #065f46;
+    border-radius: 12px;
+    margin-top: 15px;
+    font-weight: bold;
+}
+
+footer {
+    background: #312e81;
+    color: white;
+    text-align: center;
+    padding: 22px 12px;
+    margin-top: 40px;
+}
+
+footer p {
+    margin: 0;
+}
+
+@media (max-width: 600px) {
+    header h1 {
+        font-size: 25px;
+    }
+
+    nav {
+        gap: 7px;
+        padding: 12px 5px;
+    }
+
+    nav a {
+        padding: 8px 11px;
+        font-size: 13px;
+    }
+
+    .container,
+    main {
+        width: 94%;
+        margin: 20px auto;
+    }
+
+    .hero {
+        padding: 25px 15px;
+    }
+
+    .hero h2 {
+        font-size: 23px;
+    }
+
+    .card,
+    .lesson,
+    .question-card,
+    .progress-container,
+    .chat-container {
+        padding: 18px;
+    }
+    
+.back-btn {
+display: inline-block;
+padding: 10px 18px;
+margin: 15px;
+background: #6741d9;
+color: white !important;
+text-decoration: none;
+font-size: 15px;
+font-weight: bold;
+border: none;
+border-radius: 10px;
+cursor: pointer;
+}
+
+.back-btn:hover {
+background: #4c2da8;
+}
+.bot-message {
+    white-space: pre-wrap;
+    line-height: 1.8;
+    overflow-wrap: anywhere;
+}
+}
