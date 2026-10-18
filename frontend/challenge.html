@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Challenge | Kannada Connect AI</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <button class="back-btn" onclick="history.back()">← Back</button>
+
+<header>
+    <h1>🎯 Daily Kannada Challenge</h1>
+    <p>Learn Kannada Through Fun Challenges!</p>
+</header>
+
+<nav>
+    <a href="index.html">Home</a>
+    <a href="learn.html">Learn</a>
+    <a href="chat.html">AI Chat</a>
+    <a href="practice.html">Practice</a>
+    <a href="challenge.html">Challenge</a>
+    <a href="progress.html">Progress</a>
+</nav>
+
+<main class="container">
+
+    <section class="page-title">
+        <h2>🔥 Today's Challenge</h2>
+        <p>Complete the task and earn 10 points!</p>
+    </section>
+
+    <section class="hero">
+        <h2>🌟 Kannada Word Challenge</h2>
+        <p>Can you remember the Kannada word for "Water"?</p>
+        <p>Choose the correct answer below.</p>
+    </section>
+
+    <section class="question-card">
+
+        <h3>💧 Water in Kannada is called...</h3>
+
+        <form id="daily-challenge-form">
+
+            <label class="option">
+                <input type="radio" name="challenge-answer" value="Mane">
+                Mane
+            </label>
+
+            <label class="option">
+                <input type="radio" name="challenge-answer" value="Neeru">
+                Neeru
+            </label>
+
+            <label class="option">
+                <input type="radio" name="challenge-answer" value="Oota">
+                Oota
+            </label>
+
+            <label class="option">
+                <input type="radio" name="challenge-answer" value="Pustaka">
+                Pustaka
+            </label>
+
+            <button type="submit" class="btn">Submit Answer 🚀</button>
+
+        </form>
+
+        <div id="challenge-answer-result" class="result" role="status" aria-live="polite" style="display:none;"></div>
+
+    </section>
+
+    <section class="card">
+        <h3>🏆 Challenge Rewards</h3>
+        <p>Correct answer: 10 points</p>
+        <p>One completion per day.</p>
+        <p>Your points are saved in this browser.</p>
+    </section>
+
+    <div style="text-align:center; margin-top:25px;">
+        <a href="progress.html" class="btn">View My Progress 📈</a>
+    </div>
+
+</main>
+
+<footer>
+    <p>ಕನ್ನಡ ಕಲಿಯೋಣ, ಒಟ್ಟಿಗೆ ಬೆಳೆಯೋಣ! ❤️</p>
+    <p>Kannada Connect AI</p>
+</footer>
+
+<script src="script.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const form = document.getElementById("daily-challenge-form");
+    const result = document.getElementById("challenge-answer-result");
+
+    const challengeButton = document.createElement("button");
+    challengeButton.type = "button";
+    challengeButton.id = "complete-challenge";
+    challengeButton.dataset.challengeId = new Date().toISOString().slice(0, 10);
+    challengeButton.hidden = true;
+
+    form.appendChild(challengeButton);
+
+    form.addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        const selected = form.querySelector('input[name="challenge-answer"]:checked');
+
+        if (!selected) {
+            result.style.display = "block";
+            result.textContent = "Please select an answer first!";
+            return;
+        }
+
+        const today = new Date().getFullYear() + "-" +
+            String(new Date().getMonth() + 1).padStart(2, "0") + "-" +
+            String(new Date().getDate()).padStart(2, "0");
+
+        let progress = {};
+
+        try {
+            progress = JSON.parse(localStorage.getItem("kannadaProgress")) || {};
+        } catch (error) {
+            progress = {};
+        }
+
+        progress.completedChallenges = Array.isArray(progress.completedChallenges)
+            ? progress.completedChallenges : [];
+
+        progress.points = Number(progress.points) || 0;
+
+        if (selected.value !== "Neeru") {
+            result.style.display = "block";
+            result.textContent = "Not quite! The correct answer is Neeru (ನೀರು). Try again! 💪";
+            return;
+        }
+
+        if (progress.completedChallenges.includes(today)) {
+            result.style.display = "block";
+            result.textContent = "You have already earned today's challenge points! 🎉";
+            return;
+        }
+
+        progress.completedChallenges.push(today);
+        progress.points += 10;
+
+        localStorage.setItem("kannadaProgress", JSON.stringify(progress));
+
+        result.style.display = "block";
+        result.textContent = "Correct! ನೀರು means Water. You earned 10 points! 🏆";
+
+        form.querySelectorAll("input").forEach(function (input) {
+            input.disabled = true;
+        });
+
+        form.querySelector('button[type="submit"]').disabled = true;
+    });
+
+});
+</script>
+
+</body>
+</html>

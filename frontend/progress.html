@@ -1,0 +1,119 @@
+<!DOCTYPE html><html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Progress | Kannada Connect AI</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <button class="back-btn" onclick="history.back()">← Back</button><header>
+    <h1>📊 My Learning Progress</h1>
+    <p>Kannada Connect AI — Track Your Kannada Journey!</p>
+
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="learn.html">Learn</a>
+        <a href="chat.html">AI Chat</a>
+        <a href="practice.html">Practice</a>
+        <a href="challenge.html">Daily Challenge</a>
+        <a href="progress.html">My Progress</a>
+    </nav>
+</header>
+
+<main class="container">
+
+    <section class="hero">
+        <h2>🌟 Your Learning Dashboard</h2>
+        <p>Every word you learn brings you closer to speaking Kannada confidently!</p>
+    </section>
+
+    <section class="progress-container">
+        <h2>🏆 Your Achievements</h2>
+
+        <div class="progress-cards">
+
+            <div class="card">
+                <h3>⭐ Total Points</h3>
+                <p id="total-points">0</p>
+                <small>Points earned by learning</small>
+            </div>
+
+            <div class="card">
+                <h3>🎯 Challenges</h3>
+                <p id="completed-challenges">0</p>
+                <small>Challenges completed</small>
+            </div>
+
+            <div class="card">
+                <h3>📝 Quizzes</h3>
+                <p id="completed-quizzes">0</p>
+                <small>Quizzes completed</small>
+            </div>
+
+            <div class="card">
+                <h3>📚 Lessons</h3>
+                <p id="completed-lessons">0</p>
+                <small>Lessons completed</small>
+            </div>
+
+        </div>
+    </section>
+
+    <section class="card">
+        <h2>🚀 Learning Milestone</h2>
+        <p>Keep learning and aim to earn 100 points!</p>
+
+        <div class="progress-bar">
+            <div id="progress-fill" class="progress-fill" style="width: 0%;"></div>
+        </div>
+
+        <p id="milestone-message">You are just getting started. Let's learn Kannada!</p>
+    </section>
+
+    <section class="card">
+        <h2>💡 Keep Going, Champion!</h2>
+        <p>Complete lessons, practise quizzes, and solve daily challenges to earn points.</p>
+        <a href="learn.html" class="btn">Continue Learning 📖</a>
+        <a href="practice.html" class="btn">Take a Quiz ✍️</a>
+        <a href="challenge.html" class="btn">Try Today's Challenge 🎯</a>
+    </section>
+
+</main>
+
+<footer>
+    <p>Made with ❤️ for Kannada learners | Kannada Connect AI</p>
+</footer>
+
+<script src="script.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const pointsElement = document.getElementById("total-points");
+        const messageElement = document.getElementById("milestone-message");
+
+        function updateMilestone() {
+            let points = 0;
+
+            try {
+                const progress = JSON.parse(localStorage.getItem("kannadaProgress"));
+                if (progress && typeof progress.points === "number") {
+                    points = progress.points;
+                }
+            } catch (error) {
+                points = 0;
+            }
+
+            if (points >= 100) {
+                messageElement.textContent = "Amazing! 🎉 You reached 100 points. You are a Kannada learning champion!";
+            } else {
+                messageElement.textContent =
+                    "You have earned " + points + " out of 100 points. Keep going!";
+            }
+        }
+
+        updateMilestone();
+    });
+</script>
+
+</body>
+</html>

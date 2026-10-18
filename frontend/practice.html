@@ -1,0 +1,483 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kannada Connect AI - Practice</title>
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f3efff;
+            color: #24183f;
+        }
+
+        header {
+            padding: 20px;
+            text-align: center;
+            background: linear-gradient(135deg, #6741d9, #a78bfa);
+            color: white;
+        }
+
+        header h1 {
+            margin: 0 0 8px;
+        }
+
+        nav {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px;
+            background: #ffffff;
+        }
+
+        nav a {
+            color: #5430ae;
+            text-decoration: none;
+            font-weight: bold;
+            padding: 8px;
+        }
+
+        .practice-container {
+            width: calc(100% - 28px);
+            max-width: 650px;
+            margin: 30px auto;
+            padding: 25px;
+            background: #ffffff !important;
+            color: #24183f !important;
+            border-radius: 20px;
+            box-shadow: 0 6px 24px rgba(62, 38, 120, 0.13);
+            text-align: center;
+        }
+
+        .practice-container h1 {
+            color: #5b3cc4 !important;
+        }
+
+        #question-number {
+            color: #5b3cc4;
+            font-weight: bold;
+        }
+
+        #question {
+            color: #24183f !important;
+            font-size: 22px;
+            line-height: 1.5;
+            margin: 24px 0;
+        }
+
+        #options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: #eee8ff !important;
+            color: #241447 !important;
+            border: 2px solid #b6a2f4 !important;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .option-button:hover:not(:disabled) {
+            background: #ded2ff !important;
+        }
+
+        .option-button:disabled {
+            opacity: 1 !important;
+            cursor: default;
+        }
+
+        .option-button.correct {
+            background: #d5f7df !important;
+            color: #14532d !important;
+            border-color: #28a745 !important;
+        }
+
+        .option-button.incorrect {
+            background: #ffe0e0 !important;
+            color: #8b1e1e !important;
+            border-color: #dc3545 !important;
+        }
+
+        .practice-button {
+            padding: 12px 20px;
+            margin: 8px 4px;
+            border: none;
+            border-radius: 10px;
+            background: #6741d9;
+            color: white;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .practice-button:hover {
+            background: #4f2bb5;
+        }
+
+        #next-button[hidden],
+        #restart-button[hidden] {
+            display: none !important;
+        }
+
+        #feedback {
+            min-height: 24px;
+            margin: 18px 0;
+            font-weight: bold;
+        }
+
+        #translation {
+            margin: 15px 0;
+            padding: 12px;
+            border-radius: 12px;
+            background: #f7f4ff;
+            color: #3f286e;
+            line-height: 1.7;
+        }
+
+        #result {
+            color: #5b3cc4;
+            font-size: 21px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        #score-display {
+            color: #3f286e;
+            font-weight: bold;
+        }
+
+        @media (max-width: 600px) {
+            .practice-container {
+                padding: 18px;
+            }
+
+            #question {
+                font-size: 19px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <button class="back-btn" onclick="history.back()">← Back</button>
+    <header>
+        <h1>ಕನ್ನಡ Connect AI</h1>
+        <p>Learn Kannada the Smart Way!</p>
+    </header>
+
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="learn.html">Learn</a>
+        <a href="chat.html">AI Chat</a>
+        <a href="practice.html">Practice</a>
+        <a href="challenge.html">Challenge</a>
+        <a href="progress.html">Progress</a>
+    </nav>
+
+    <main class="practice-container">
+        <h1>🧠 Kannada Practice Quiz</h1>
+        <p>Choose the correct answer and learn Kannada!</p>
+
+        <p id="question-number">Question 1 of 10</p>
+        <h2 id="question">Loading question...</h2>
+
+        <div id="options"></div>
+
+        <p id="feedback" aria-live="polite"></p>
+
+        <div id="translation" hidden>
+            <div id="kannada-word"></div>
+            <div id="english-meaning"></div>
+            <button id="speak-kannada" class="practice-button" type="button">
+                🔊 Hear Kannada
+            </button>
+            <button id="speak-english" class="practice-button" type="button">
+                🔊 Hear English
+            </button>
+        </div>
+
+        <button id="next-button" class="practice-button" type="button" hidden>
+            Next Question ➡️
+        </button>
+
+        <div id="result" aria-live="polite"></div>
+
+        <button id="restart-button" class="practice-button" type="button" hidden>
+            🔄 Try Again
+        </button>
+
+        <p id="score-display">Score: 0</p>
+    </main>
+
+    <script>
+        const questionBank = [
+            {
+                question: "What is the Kannada word for Water?",
+                kannada: "ನೀರು",
+                english: "Water",
+                options: ["ಬೆಂಕಿ (Fire)", "ನೀರು (Water)", "ಗಾಳಿ (Air)", "ಮಣ್ಣು (Soil)"],
+                answer: 1
+            },
+            {
+                question: "What is the Kannada word for Mother?",
+                kannada: "ಅಮ್ಮ",
+                english: "Mother",
+                options: ["ಅಪ್ಪ (Father)", "ಅಣ್ಣ (Brother)", "ಅಮ್ಮ (Mother)", "ಅಕ್ಕ (Sister)"],
+                answer: 2
+            },
+            {
+                question: "What does ನಮಸ್ಕಾರ mean?",
+                kannada: "ನಮಸ್ಕಾರ",
+                english: "Hello / Greetings",
+                options: ["ವಿದಾಯ (Goodbye)", "ಧನ್ಯವಾದಗಳು (Thank you)", "ಕ್ಷಮಿಸಿ (Sorry)", "ನಮಸ್ಕಾರ (Hello)"],
+                answer: 3
+            },
+            {
+                question: "What is the Kannada word for Book?",
+                kannada: "ಪುಸ್ತಕ",
+                english: "Book",
+                options: ["ಮನೆ (House)", "ಪುಸ್ತಕ (Book)", "ಶಾಲೆ (School)", "ಮರ (Tree)"],
+                answer: 1
+            },
+            {
+                question: "What does ಧನ್ಯವಾದಗಳು mean?",
+                kannada: "ಧನ್ಯವಾದಗಳು",
+                english: "Thank you",
+                options: ["ಸ್ವಾಗತ (Welcome)", "ಶುಭೋದಯ (Good morning)", "ಧನ್ಯವಾದಗಳು (Thank you)", "ಶುಭ ರಾತ್ರಿ (Good night)"],
+                answer: 2
+            },
+            {
+                question: "What is the Kannada word for Sun?",
+                kannada: "ಸೂರ್ಯ",
+                english: "Sun",
+                options: ["ಚಂದ್ರ (Moon)", "ನಕ್ಷತ್ರ (Star)", "ಮಳೆ (Rain)", "ಸೂರ್ಯ (Sun)"],
+                answer: 3
+            },
+            {
+                question: "What does ನಾನು mean in English?",
+                kannada: "ನಾನು",
+                english: "I",
+                options: ["ನೀನು (You)", "ನಾನು (I)", "ಅವನು (He)", "ಅವರು (They)"],
+                answer: 1
+            },
+            {
+                question: "What is the Kannada word for Friend?",
+                kannada: "ಸ್ನೇಹಿತ",
+                english: "Friend",
+                options: ["ಶತ್ರು (Enemy)", "ಶಿಕ್ಷಕ (Teacher)", "ಸ್ನೇಹಿತ (Friend)", "ವಿದ್ಯಾರ್ಥಿ (Student)"],
+                answer: 2
+            },
+            {
+                question: "What does ಶುಭೋದಯ mean?",
+                kannada: "ಶುಭೋದಯ",
+                english: "Good morning",
+                options: ["ಶುಭ ರಾತ್ರಿ (Good night)", "ವಿದಾಯ (Goodbye)", "ಧನ್ಯವಾದಗಳು (Thank you)", "ಶುಭೋದಯ (Good morning)"],
+                answer: 3
+            },
+            {
+                question: "What is the Kannada word for House?",
+                kannada: "ಮನೆ",
+                english: "House",
+                options: ["ಮರ (Tree)", "ಮನೆ (House)", "ನೀರು (Water)", "ಹೂವು (Flower)"],
+                answer: 1
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let answered = false;
+
+        const questionNumber = document.getElementById("question-number");
+        const questionElement = document.getElementById("question");
+        const optionsElement = document.getElementById("options");
+        const feedbackElement = document.getElementById("feedback");
+        const nextButton = document.getElementById("next-button");
+        const restartButton = document.getElementById("restart-button");
+        const resultElement = document.getElementById("result");
+        const scoreDisplay = document.getElementById("score-display");
+        const translation = document.getElementById("translation");
+        const kannadaWord = document.getElementById("kannada-word");
+        const englishMeaning = document.getElementById("english-meaning");
+
+        function speak(text, language) {
+            if (!("speechSynthesis" in window)) {
+                feedbackElement.textContent =
+                    "Sorry, voice is not supported in this browser.";
+                return;
+            }
+
+            window.speechSynthesis.cancel();
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = language;
+            utterance.rate = 0.8;
+
+            const voices = window.speechSynthesis.getVoices();
+            const voice = voices.find(v =>
+                v.lang.toLowerCase().startsWith(language.slice(0, 2))
+            );
+
+            if (voice) {
+                utterance.voice = voice;
+            }
+
+            utterance.onerror = function() {
+                feedbackElement.textContent =
+                    "Voice unavailable. Try another browser or device.";
+            };
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function showQuestion() {
+            answered = false;
+
+            const current = questionBank[currentQuestion];
+
+            questionNumber.textContent =
+                `Question ${currentQuestion + 1} of ${questionBank.length}`;
+
+            questionElement.textContent = current.question;
+            optionsElement.replaceChildren();
+
+            feedbackElement.textContent = "";
+            resultElement.textContent = "";
+            translation.hidden = true;
+            nextButton.hidden = true;
+            restartButton.hidden = true;
+
+            current.options.forEach((option, index) => {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "option-button";
+                button.textContent = option;
+
+                button.addEventListener("click", () => {
+                    checkAnswer(index, button);
+                });
+
+                optionsElement.appendChild(button);
+            });
+
+            scoreDisplay.textContent = `Score: ${score}`;
+        }
+
+        function checkAnswer(selectedIndex, selectedButton) {
+            if (answered) return;
+
+            answered = true;
+
+            const current = questionBank[currentQuestion];
+            const buttons = optionsElement.querySelectorAll(".option-button");
+
+            buttons.forEach(button => button.disabled = true);
+
+            const selectedText = current.options[selectedIndex];
+            const selectedKannada = selectedText.split(" (")[0];
+            const selectedEnglish = selectedText.includes(" (")
+                ? selectedText.split(" (")[1].replace(/\)$/, "")
+                : selectedText;
+
+            kannadaWord.textContent = `ಕನ್ನಡ: ${selectedKannada}`;
+            englishMeaning.textContent = `English meaning: ${selectedEnglish}`;
+            translation.hidden = false;
+
+            document.getElementById("speak-kannada").onclick = () => {
+                speak(selectedKannada, "kn-IN");
+            };
+
+            document.getElementById("speak-english").onclick = () => {
+                speak(selectedEnglish, "en-IN");
+            };
+
+            if (selectedIndex === current.answer) {
+                score++;
+                selectedButton.classList.add("correct");
+                feedbackElement.textContent = "✅ Correct answer! ಚನ್ನಾಗಿದೆ!";
+                feedbackElement.style.color = "#16803d";
+            } else {
+                selectedButton.classList.add("incorrect");
+                buttons[current.answer].classList.add("correct");
+                feedbackElement.textContent =
+                    `❌ Correct answer: ${current.options[current.answer]}`;
+                feedbackElement.style.color = "#c62828";
+            }
+
+            scoreDisplay.textContent = `Score: ${score}`;
+
+            nextButton.textContent =
+                currentQuestion === questionBank.length - 1
+                    ? "See Results 🏆"
+                    : "Next Question ➡️";
+
+            nextButton.hidden = false;
+        }
+
+        function nextQuestion() {
+            if (!answered) return;
+
+            window.speechSynthesis?.cancel();
+            currentQuestion++;
+
+            if (currentQuestion < questionBank.length) {
+                showQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            questionNumber.textContent = "Quiz Completed!";
+            questionElement.textContent = "🎉 Great job! You completed the quiz.";
+            optionsElement.replaceChildren();
+            feedbackElement.textContent = "";
+            translation.hidden = true;
+            nextButton.hidden = true;
+            restartButton.hidden = false;
+
+            resultElement.textContent =
+                `Your Score: ${score} / ${questionBank.length}` +
+                (score === questionBank.length
+                    ? " 🌟 Perfect Score!"
+                    : score >= 7
+                    ? " 👏 Excellent!"
+                    : score >= 5
+                    ? " 💪 Good effort!"
+                    : " 📚 Keep Practicing!");
+        }
+
+        function restartQuiz() {
+            window.speechSynthesis?.cancel();
+            currentQuestion = 0;
+            score = 0;
+            showQuestion();
+        }
+
+        nextButton.addEventListener("click", nextQuestion);
+        restartButton.addEventListener("click", restartQuiz);
+
+        if ("speechSynthesis" in window) {
+            window.speechSynthesis.getVoices();
+        }
+
+        showQuestion();
+    </script>
+</body>
+</html>

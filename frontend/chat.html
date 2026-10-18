@@ -1,0 +1,101 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kannada AI Chat | Kannada Connect AI</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<button class="back-btn" onclick="history.back()">← Back</button>
+<header>
+    <h1>🤖 Kannada AI Chat</h1>
+    <p>ಕನ್ನಡದಲ್ಲಿ ಮಾತನಾಡೋಣ! Let's speak Kannada!</p>
+</header>
+
+<nav>
+    <a href="index.html">Home</a>
+    <a href="learn.html">Learn</a>
+    <a href="chat.html">AI Chat</a>
+    <a href="practice.html">Practice</a>
+    <a href="challenge.html">Challenge</a>
+    <a href="progress.html">Progress</a>
+</nav>
+
+<main class="container">
+
+    <section class="page-title">
+        <h2>ನಿಮ್ಮ ಕನ್ನಡ ಸ್ನೇಹಿತ 💜</h2>
+        <p>Practice simple Kannada conversations in a friendly environment.</p>
+    </section>
+
+    <section class="chat-box">
+
+        <div class="chat-messages" id="chat-messages" aria-live="polite">
+            <div class="message bot-message">
+                ನಮಸ್ಕಾರ! 🙏 Welcome to Kannada Connect AI!<br><br>
+                Ask me about Kannada greetings, food, water, friendship and everyday words.
+                <br><br>
+                Try typing: "Hello", "What is water in Kannada?" or "Thank you".
+            </div>
+        </div>
+
+        <form class="chat-input" id="chat-form">
+            <input
+                type="text"
+                id="chat-input"
+                placeholder="Type your message here..."
+                aria-label="Your message"
+                autocomplete="off"
+                required
+            >
+            <button type="submit">Send ➤</button>
+        </form>
+        <div class="voice-assistant">
+    <h3>🎙️ AI Voice Assistant</h3>
+    <p>Ask your question in English and learn in Kannada!</p>
+
+    <button type="button" id="voice-button">
+        🎤 Speak in English
+    </button>
+
+    <p id="voice-status" aria-live="polite"></p>
+
+    <button type="button" id="speak-answer" disabled>
+        🔊 Listen in Kannada
+    </button>
+</div>
+
+        <p style="margin-top: 15px; font-size: 13px; color: #625f78;">
+            Note: This demo currently uses predefined responses and does not require an internet connection after the page loads.
+        </p>
+
+    </section>
+
+    <section class="cards" style="margin-top: 25px;">
+
+        <div class="card">
+            <h3>👋 Greetings</h3>
+            <p>Namaskara — Hello</p>
+            <p>Dhanyavadagalu — Thank you</p>
+        </div>
+
+        <div class="card">
+            <h3>🍚 Everyday Words</h3>
+            <p>Neeru — Water</p>
+            <p>Oota — Food / Meal</p>
+        </div>
+
+    </section>
+
+</main>
+
+<footer>
+    <p>Kannada Connect AI | Learn • Practice • Connect ❤️</p>
+</footer>
+
+<script src="script.js"></script>
+
+</body>
+</html>
