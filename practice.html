@@ -15,14 +15,14 @@
         body {
             margin: 0;
             font-family: Arial, sans-serif;
-            background: #f3efff;
-            color: #24183f;
+            background: linear-gradient(135deg, #fff8e7, #ffe3a3);
+            color: #29243b;
         }
 
         header {
             padding: 20px;
             text-align: center;
-            background: linear-gradient(135deg, #6741d9, #a78bfa);
+            background: linear-gradient(135deg, #8b1e3f, #c62828, #f5a623);
             color: white;
         }
 
@@ -36,14 +36,18 @@
             justify-content: center;
             gap: 8px;
             padding: 14px;
-            background: #ffffff;
+            background: #fff8e7;
         }
 
         nav a {
-            color: #5430ae;
+            color: #8b1e3f;
             text-decoration: none;
             font-weight: bold;
             padding: 8px;
+        }
+
+        nav a:hover {
+            color: #c62828;
         }
 
         .practice-container {
@@ -52,23 +56,24 @@
             margin: 30px auto;
             padding: 25px;
             background: #ffffff !important;
-            color: #24183f !important;
+            color: #29243b !important;
+            border: 2px solid #f5a623;
             border-radius: 20px;
-            box-shadow: 0 6px 24px rgba(62, 38, 120, 0.13);
+            box-shadow: 0 6px 24px rgba(100, 21, 47, 0.15);
             text-align: center;
         }
 
         .practice-container h1 {
-            color: #5b3cc4 !important;
+            color: #8b1e3f !important;
         }
 
         #question-number {
-            color: #5b3cc4;
+            color: #8b1e3f;
             font-weight: bold;
         }
 
         #question {
-            color: #24183f !important;
+            color: #29243b !important;
             font-size: 22px;
             line-height: 1.5;
             margin: 24px 0;
@@ -84,18 +89,20 @@
             display: block;
             width: 100%;
             padding: 15px;
-            background: #eee8ff !important;
-            color: #241447 !important;
-            border: 2px solid #b6a2f4 !important;
+            background: #fff8e7 !important;
+            color: #64152f !important;
+            border: 2px solid #f5a623 !important;
             border-radius: 12px;
             font-size: 16px;
             font-weight: bold;
             text-align: left;
             cursor: pointer;
+            transition: 0.2s;
         }
 
         .option-button:hover:not(:disabled) {
-            background: #ded2ff !important;
+            background: #ffe3a3 !important;
+            transform: translateY(-2px);
         }
 
         .option-button:disabled {
@@ -120,15 +127,17 @@
             margin: 8px 4px;
             border: none;
             border-radius: 10px;
-            background: #6741d9;
+            background: linear-gradient(120deg, #8b1e3f, #c62828, #f5a623);
             color: white;
             font-size: 15px;
             font-weight: bold;
             cursor: pointer;
+            transition: 0.2s;
         }
 
         .practice-button:hover {
-            background: #4f2bb5;
+            background: #f5a623;
+            color: #64152f;
         }
 
         #next-button[hidden],
@@ -146,20 +155,32 @@
             margin: 15px 0;
             padding: 12px;
             border-radius: 12px;
-            background: #f7f4ff;
-            color: #3f286e;
+            background: #fff8e7;
+            color: #8b1e3f;
+            border: 1px solid #f5a623;
             line-height: 1.7;
         }
 
         #result {
-            color: #5b3cc4;
+            color: #8b1e3f;
             font-size: 21px;
             font-weight: bold;
             margin-top: 20px;
         }
 
         #score-display {
-            color: #3f286e;
+            color: #64152f;
+            font-weight: bold;
+        }
+
+        .back-btn {
+            margin: 12px;
+            padding: 9px 16px;
+            border: none;
+            border-radius: 8px;
+            background: #8b1e3f;
+            color: white;
+            cursor: pointer;
             font-weight: bold;
         }
 
@@ -176,7 +197,9 @@
 </head>
 
 <body>
+
     <button class="back-btn" onclick="history.back()">← Back</button>
+
     <header>
         <h1>ಕನ್ನಡ Connect AI</h1>
         <p>Learn Kannada the Smart Way!</p>
@@ -192,10 +215,12 @@
     </nav>
 
     <main class="practice-container">
+
         <h1>🧠 Kannada Practice Quiz</h1>
         <p>Choose the correct answer and learn Kannada!</p>
 
         <p id="question-number">Question 1 of 10</p>
+
         <h2 id="question">Loading question...</h2>
 
         <div id="options"></div>
@@ -205,9 +230,11 @@
         <div id="translation" hidden>
             <div id="kannada-word"></div>
             <div id="english-meaning"></div>
+
             <button id="speak-kannada" class="practice-button" type="button">
                 🔊 Hear Kannada
             </button>
+
             <button id="speak-english" class="practice-button" type="button">
                 🔊 Hear English
             </button>
@@ -224,6 +251,7 @@
         </button>
 
         <p id="score-display">Score: 0</p>
+
     </main>
 
     <script>
@@ -330,6 +358,7 @@
             utterance.rate = 0.8;
 
             const voices = window.speechSynthesis.getVoices();
+
             const voice = voices.find(v =>
                 v.lang.toLowerCase().startsWith(language.slice(0, 2))
             );
@@ -355,16 +384,19 @@
                 `Question ${currentQuestion + 1} of ${questionBank.length}`;
 
             questionElement.textContent = current.question;
+
             optionsElement.replaceChildren();
 
             feedbackElement.textContent = "";
             resultElement.textContent = "";
+
             translation.hidden = true;
             nextButton.hidden = true;
             restartButton.hidden = true;
 
             current.options.forEach((option, index) => {
                 const button = document.createElement("button");
+
                 button.type = "button";
                 button.className = "option-button";
                 button.textContent = option;
@@ -385,18 +417,27 @@
             answered = true;
 
             const current = questionBank[currentQuestion];
-            const buttons = optionsElement.querySelectorAll(".option-button");
 
-            buttons.forEach(button => button.disabled = true);
+            const buttons =
+                optionsElement.querySelectorAll(".option-button");
+
+            buttons.forEach(button => {
+                button.disabled = true;
+            });
 
             const selectedText = current.options[selectedIndex];
+
             const selectedKannada = selectedText.split(" (")[0];
+
             const selectedEnglish = selectedText.includes(" (")
                 ? selectedText.split(" (")[1].replace(/\)$/, "")
                 : selectedText;
 
             kannadaWord.textContent = `ಕನ್ನಡ: ${selectedKannada}`;
-            englishMeaning.textContent = `English meaning: ${selectedEnglish}`;
+
+            englishMeaning.textContent =
+                `English meaning: ${selectedEnglish}`;
+
             translation.hidden = false;
 
             document.getElementById("speak-kannada").onclick = () => {
@@ -409,14 +450,22 @@
 
             if (selectedIndex === current.answer) {
                 score++;
+
                 selectedButton.classList.add("correct");
-                feedbackElement.textContent = "✅ Correct answer! ಚನ್ನಾಗಿದೆ!";
+
+                feedbackElement.textContent =
+                    "✅ Correct answer! ಚನ್ನಾಗಿದೆ!";
+
                 feedbackElement.style.color = "#16803d";
+
             } else {
                 selectedButton.classList.add("incorrect");
+
                 buttons[current.answer].classList.add("correct");
+
                 feedbackElement.textContent =
                     `❌ Correct answer: ${current.options[current.answer]}`;
+
                 feedbackElement.style.color = "#c62828";
             }
 
@@ -434,6 +483,7 @@
             if (!answered) return;
 
             window.speechSynthesis?.cancel();
+
             currentQuestion++;
 
             if (currentQuestion < questionBank.length) {
@@ -445,9 +495,14 @@
 
         function showResults() {
             questionNumber.textContent = "Quiz Completed!";
-            questionElement.textContent = "🎉 Great job! You completed the quiz.";
+
+            questionElement.textContent =
+                "🎉 Great job! You completed the quiz.";
+
             optionsElement.replaceChildren();
+
             feedbackElement.textContent = "";
+
             translation.hidden = true;
             nextButton.hidden = true;
             restartButton.hidden = false;
@@ -465,12 +520,15 @@
 
         function restartQuiz() {
             window.speechSynthesis?.cancel();
+
             currentQuestion = 0;
             score = 0;
+
             showQuestion();
         }
 
         nextButton.addEventListener("click", nextQuestion);
+
         restartButton.addEventListener("click", restartQuiz);
 
         if ("speechSynthesis" in window) {
@@ -479,5 +537,6 @@
 
         showQuestion();
     </script>
+
 </body>
 </html>

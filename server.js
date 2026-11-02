@@ -1,238 +1,215 @@
 
-require("dotenv").config();
-
 const express = require("express");
 const cors = require("cors");
+const dotenv = require("dotenv");
+const path = require("path");
+const multer = require("multer");
+const pdfParse = require("pdf-parse");
+const mammoth = require("mammoth");
+
+dotenv.config();
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(express.json({ limit: "2mb" }));
+app.use(express.json({ limit: "10mb" }));
 
-// Server health check
-app.get("/", (req, res) => {
-    res.send("NEXUS - Kannada Connect AI Server is Running!");
+// Serve all frontend files from the main project folder
+app.use(express.static(__dirname));
+
+// File upload configuration
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 5 * 1024 * 1024
+    }
 });
 
-// NEXUS AI System Prompt
-const systemPrompt = `
-- Your name is NEXUS. Never introduce yourself as ChatGPT, OpenAI, or another AI assistant.
-- If asked your name, reply that your name is NEXUS in the user's requested language.
-You are NEXUS - Kannada Connect AI.
+// NEXUS AI system instructions
+const SYSTEM_PROMPT = `
+You are NEXUS, a friendly AI assistant for Kannada Connect AI.
 
-Your purpose is to help people learn, understand, speak,
-read and communicate in Kannada confidently.
+Your responsibilities:
+1. Understand Kannada, Kanglish and English.
+2. Reply in the same language the user uses.
+3. If the user writes in Kanglish, reply in natural Kanglish.
+4. If the user writes in Kannada, reply in Kannada.
+5. If the user writes in English, reply in simple English.
+6. Help users learn Kannada vocabulary, grammar and pronunciation.
+7. Support Mysuru, North Karnataka and Coastal Kannada dialects.
+8. Keep answers clear, friendly and easy to understand.
+9. Explain difficult concepts step by step.
+10. Be helpful and conversational.
 
-STRICT LANGUAGE DETECTION AND RESPONSE RULES:
-
-First identify the language and script of the user's message.
-
-1. Kannada written in Kannada script:
-   Reply in Kannada script only.
-   Example: User: ನನಗೆ ಕನ್ನಡ ಕಲಿಯಬೇಕು.
-   Reply: ಖಂಡಿತ! ನಾವು ಸರಳ ಪದಗಳಿಂದ ಪ್ರಾರಂಭಿಸೋಣ.
-
-2. Kannada written using English letters (Kanglish):
-   Reply ONLY in natural Kanglish using English letters.
-   Do not use Kannada script.
-   Do not use English sentences.
-   Use Kannada words written in English letters.
-   Example:
-   User: Nange Kannada kalibeku.
-   Reply: Khandita! Naavu simple Kannada words inda start madona.
-- Use ONLY basic English letters (A-Z, a-z).
-- Never use accented characters such as ā, ī, ṅ, ḍ.
-- Do not write complete English sentences.
-- Write Kannada words in simple Roman letters.
-- Keep the response natural and conversational.
-- Example: "Nimge Kannada kalibekandre, naavu simple words inda start madona."
-   
-3. English:
-   Reply in English only.
-   Example: User: I want to learn Kannada.
-   Reply: Sure! Let's start with simple Kannada words.
-
-4. Never reply in English when the user writes in
-   Kannada script or Kanglish.
-5. Never change the user's language unless requested.
-6. If the user explicitly requests another language,
-   follow that request.
-7. Understand Kannada and Kanglish without asking
-   the user to translate.
-
-ANSWER STYLE:
-
-- Give short, direct answers by default.
-- Prefer 1–3 sentences.
-- Explain in detail only when requested.
-- Use simple and natural language.
-- Answer exactly what the user asks.
-- Avoid unnecessary introductions and repetition.
-- Never invent facts or meanings.
-- If uncertain, clearly admit it.
-
-KANNADA LEARNING:
-
-Help users learn:
-- Kannada vocabulary
-- Basic grammar
-- Everyday conversations
-- Common expressions
-- Sentence formation
-- Reading and writing
-- Practical communication
-- English-to-Kannada translation
-- Kannada-to-English translation
-
-REGIONAL KANNADA DIALECTS:
-
-Support:
-1. Mysuru Kannada
-2. North Karnataka Kannada
-3. Coastal Karnataka Kannada
-
-When explaining dialects:
-- Give authentic regional expressions.
-- Explain standard Kannada meanings.
-- Give practical everyday examples.
-- Mention regional usage when reliable.
-- Never invent regional words.
-- Do not stereotype speakers.
-- Admit uncertainty when unsure.
-
-REAL-LIFE KANNADA ASSISTANT:
-
-Help explain:
-- Government notices and schemes
-- College circulars
-- Public service instructions
-- Applications and forms
-- Everyday documents
-- Official announcements
-
-Highlight important dates, instructions and requirements.
-Never invent information missing from a document.
-
-PRONUNCIATION COACH:
-
-- Give correct Kannada spelling.
-- Explain difficult sounds.
-- Provide simple pronunciation guides.
-- Give practice sentences when requested.
-- Correct mistakes politely.
-- Never claim to measure actual pronunciation
-  from text alone.
-
-VOICE ASSISTANT:
-
-- Understand transcribed Kannada speech.
-- Understand Kanglish speech.
-- Respond naturally in the user's language.
-- Keep spoken answers clear and concise.
-
-GENERAL BEHAVIOUR:
-
-- Be friendly, respectful and encouraging.
-- Respect all Kannada-speaking communities.
-- Never mock regional dialects.
-- Prioritise accuracy over creativity.
-- Do not repeat information unnecessarily.
-
-Your goal is to make Kannada communication
-easy and accessible for everyone.
+Do not unnecessarily switch languages.
 `;
 
-// AI Chat API
+// Ask Groq AI
+async function askNexus(message, dialect = "standard", mode = "chat") {
+    const apiKey = process.env.GROQ_API_KEY;
+
+    if (!apiKey) {
+        throw new Error("GROQ_API_KEY is missing from your .env file.");
+    }
+
+    const dialectInstructions = {
+        standard: "Use Standard Kannada when Kannada is appropriate.",
+        mysuru: "Use natural Mysuru Kannada when Kannada is appropriate.",
+        north: "Use North Karnataka Kannada when Kannada is appropriate.",
+        coastal: "Use Coastal Karnataka Kannada when Kannada is appropriate."
+    };
+
+    const selectedDialect =
+        dialectInstructions[dialect] || dialectInstructions.standard;
+
+    const response = await fetch(
+        "https://api.groq.com/openai/v1/chat/completions",
+        {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                model: "openai/gpt-oss-120b",
+                messages: [
+                    {
+                        role: "system",
+                        content: SYSTEM_PROMPT + "\n" + selectedDialect
+                    },
+                    {
+                        role: "user",
+                        content: message
+                    }
+                ],
+                temperature: 0.7,
+                max_completion_tokens: 1500
+            })
+        }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        console.error("Groq API error:", data);
+        throw new Error(
+            data.error?.message || "AI service request failed."
+        );
+    }
+
+    const reply = data.choices?.[0]?.message?.content;
+
+    if (!reply) {
+        throw new Error("No reply received from AI.");
+    }
+
+    return reply;
+}
+
+// Home route
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "index.html"));
+});
+
+// Health check
+app.get("/api/health", (req, res) => {
+    res.json({
+        status: "success",
+        message: "NEXUS server is running!"
+    });
+});
+
+// Chat API
 app.post("/api/chat", async (req, res) => {
     try {
-        const message =
-            req.body.message ||
-            req.body.prompt ||
-            req.body.question;
+        const { message, dialect = "standard", mode = "chat" } = req.body;
 
-        if (!message || !String(message).trim()) {
+        if (!message || !message.trim()) {
             return res.status(400).json({
-                reply: "Please enter a message."
+                error: "Please enter a message."
             });
         }
 
-        if (!process.env.GROQ_API_KEY) {
-            console.error("GROQ_API_KEY is missing.");
+        const reply = await askNexus(message, dialect, mode);
 
-            return res.status(500).json({
-                reply: "AI setup is incomplete. Please check server configuration."
-            });
-        }
-
-        const response = await fetch(
-            "https://api.groq.com/openai/v1/chat/completions",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization":
-                        `Bearer ${process.env.GROQ_API_KEY}`
-                },
-                body: JSON.stringify({
-                    model: "openai/gpt-oss-120b",
-                    messages: [
-                        {
-                            role: "system",
-                            content: systemPrompt
-                        },
-                        {
-                            role: "user",
-                            content: String(message)
-                        }
-                    ],
-                    max_completion_tokens: 1200,
-                    temperature: 0.3
-                }),
-                signal: AbortSignal.timeout(30000)
-            }
-        );
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            console.error(
-                "Groq API error:",
-                response.status,
-                data
-            );
-
-            return res.status(502).json({
-                reply: response.status === 429
-                    ? "AI usage limit reached. Please try again later."
-                    : "AI is temporarily unavailable. Please try again."
-            });
-        }
-
-        const reply =
-            data.choices?.[0]?.message?.content?.trim();
-
-        if (!reply) {
-            return res.status(502).json({
-                reply: "I couldn't generate an answer. Please try again."
-            });
-        }
-
-        return res.json({ reply });
+        res.json({
+            success: true,
+            reply: reply
+        });
 
     } catch (error) {
-        console.error("Chat error details:", error);
+        console.error("Chat error:", error);
 
-        return res.status(500).json({
-            reply: "Unable to connect to AI right now. Please try again."
+        res.status(500).json({
+            error: error.message || "Unable to get AI response."
+        });
+    }
+});
+
+// Document upload API
+app.post("/api/document", upload.single("file"), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({
+                error: "Please upload a PDF or DOCX file."
+            });
+        }
+
+        const fileName = req.file.originalname.toLowerCase();
+        let extractedText = "";
+
+        if (fileName.endsWith(".pdf")) {
+            const pdfData = await pdfParse(req.file.buffer);
+            extractedText = pdfData.text;
+
+        } else if (fileName.endsWith(".docx")) {
+            const docData = await mammoth.extractRawText({
+                buffer: req.file.buffer
+            });
+            extractedText = docData.value;
+
+        } else {
+            return res.status(400).json({
+                error: "Only PDF and DOCX files are supported."
+            });
+        }
+
+        if (!extractedText.trim()) {
+            return res.status(400).json({
+                error: "No readable text found in this document."
+            });
+        }
+
+        const question =
+            req.body.question ||
+            "Summarize this document in simple language.";
+
+        const prompt = `
+        User question: ${question}
+
+        Document content:
+        ${extractedText.slice(0, 12000)}
+        `;
+
+        const reply = await askNexus(prompt);
+
+        res.json({
+            success: true,
+            fileName: req.file.originalname,
+            reply: reply
+        });
+
+    } catch (error) {
+        console.error("Document error:", error);
+
+        res.status(500).json({
+            error: error.message || "Unable to process the document."
         });
     }
 });
 
 // Start server
-const PORT = process.env.PORT || 3000;
-
 app.listen(PORT, () => {
-    console.log(
-        `NEXUS - Kannada Connect AI server running on port ${PORT}`
-    );
+    console.log(`NEXUS - Kannada Connect AI server running on port ${PORT}`);
 });

@@ -6,6 +6,12 @@ const defaultProgress = {
     learnedLessons: []
 };
 
+const API_BASE_URL =
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1"
+        ? "http://localhost:3000"
+        : "https://kannada-coonect-ai.onrender.com";
+
 function getProgress() {
     try {
         const saved = JSON.parse(localStorage.getItem("kannadaProgress"));
@@ -14,16 +20,13 @@ function getProgress() {
             return {
                 ...defaultProgress,
                 ...saved,
-                completedChallenges: Array.isArray(saved.completedChallenges)
-                    ? saved.completedChallenges : [],
-                completedQuizzes: Array.isArray(saved.completedQuizzes)
-                    ? saved.completedQuizzes : [],
-                learnedLessons: Array.isArray(saved.learnedLessons)
-                    ? saved.learnedLessons : []
+                completedChallenges: Array.isArray(saved.completedChallenges) ? saved.completedChallenges : [],
+                completedQuizzes: Array.isArray(saved.completedQuizzes) ? saved.completedQuizzes : [],
+                learnedLessons: Array.isArray(saved.learnedLessons) ? saved.learnedLessons : []
             };
         }
     } catch (error) {
-        console.error("Could not load progress:", error);
+        console.error("Progress error:", error);
     }
 
     return { ...defaultProgress };
@@ -50,17 +53,40 @@ let latestKannadaAnswer = "";
 let speakAfterAIReply = false;
 
 document.addEventListener("DOMContentLoaded", function () {
+
+    const chatForm = document.getElementById("chat-form");
+    const chatInput = document.getElementById("chat-input");
+    const chatMessages = document.getElementById("chat-messages");
+
     const voiceButton = document.getElementById("voice-button");
     const voiceStatus = document.getElementById("voice-status");
-    const speakAnswerButton = document.getElementById("speak-answer");
+    const speakButton = document.getElementById("speak-answer");
 
-    const SpeechRecognition =
-        window.SpeechRecognition || window.webkitSpeechRecognition;
+    const dialectSelect = document.getElementById("dialect-select");
+    const voiceLanguage = document.getElementById("voice-language");
+
+    function addChatMessage(message, type) {
+        if (!chatMessages) return;
+
+        const div = document.createElement("div");
+        div.className = "message " + type;
+        div.textContent = message;
+
+        chatMessages.appendChild(div);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function cleanReply(reply) {
+        return String(reply || "")
+            .replace(/\*\*(.*?)\*\*/g, "$1")
+            .replace(/^#{1,6}\s*/gm, "")
+            .trim();
+    }
 
     function speakKannada(text) {
-        if (!text || !("speechSynthesis" in window)) {
+        if (!text || !window.speechSynthesis) {
             if (voiceStatus) {
-                voiceStatus.textContent = "Voice output is not supported.";
+                voiceStatus.textContent = "Voice output unavailable.";
             }
             return;
         }
@@ -68,75 +94,148 @@ document.addEventListener("DOMContentLoaded", function () {
         window.speechSynthesis.cancel();
 
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = "kn-IN";
+        utterance.lang = voiceLanguage ? voiceLanguage.value : "kn-IN";
         utterance.rate = 0.85;
 
         utterance.onstart = function () {
-            if (voiceStatus) {
-                voiceStatus.textContent = "AI is speaking in Kannada 🔊";
-            }
-        };
-
-        utterance.onend = function () {
-            if (voiceStatus) {
-                voiceStatus.textContent = "Done! Ask another question 🎉";
-            }
+            if (voiceStatus) voiceStatus.textContent = "AI is speaking 🔊";
         };
 
         utterance.onerror = function () {
-            if (voiceStatus) {
-                voiceStatus.textContent =
-                    "Kannada voice unavailable. Check your device's speech voices.";
-            }
+            if (voiceStatus) voiceStatus.textContent = "Voice unavailable.";
         };
 
         window.speechSynthesis.speak(utterance);
     }
+
+    window.speakAIKannada = speakKannada;
+
+    async function sendMessage(message, mode = "chat") {
+        const response = await fetch(API_BASE_URL + "/api/chat", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                message: message,
+                dialect: dialectSelect ? dialectSelect.value : "standard",
+                mode: mode
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.reply || data.error || "AI request failed.");
+        }
+
+        const reply = cleanReply(data.reply);
+
+        if (!reply) {
+            throw new Error("AI returned an empty reply.");
+        }
+
+        addChatMessage(reply, "bot-message");
+
+        latestKannadaAnswer = reply;
+
+        if (speakButton) {
+            speakButton.disabled = false;
+        }
+
+        if (speakAfterAIReply) {
+            speakAfterAIReply = false;
+            speakKannada(latestKannadaAnswer);
+        }
+
+        return reply;
+    }
+
+    // CHAT
+    if (chatForm && chatInput) {
+        chatForm.addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            const message = chatInput.value.trim();
+            if (!message) return;
+
+            addChatMessage(message, "user-message");
+            chatInput.value = "";
+
+            const sendButton = chatForm.querySelector('button[type="submit"]');
+
+            if (sendButton) {
+                sendButton.disabled = true;
+                sendButton.textContent = "Thinking...";
+            }
+
+            try {
+                await sendMessage(message);
+
+                if (voiceStatus) {
+                    voiceStatus.textContent = "AI replied successfully 💜";
+                }
+
+            } catch (error) {
+                console.error("Chat error:", error);
+
+                speakAfterAIReply = false;
+
+                addChatMessage(
+                    "Sorry! NEXUS could not connect. Please check your server and internet connection.",
+                    "bot-message"
+                );
+
+                if (voiceStatus) {
+                    voiceStatus.textContent = "AI connection failed.";
+                }
+
+            } finally {
+                if (sendButton) {
+                    sendButton.disabled = false;
+                    sendButton.textContent = "Send ➤";
+                }
+            }
+        });
+    }
+
+    // VOICE INPUT
+    const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (voiceButton) {
         if (!SpeechRecognition) {
             voiceButton.disabled = true;
 
             if (voiceStatus) {
-                voiceStatus.textContent =
-                    "Voice recognition is unavailable. Try Chrome or Edge.";
+                voiceStatus.textContent = "Use Chrome or Edge for voice input.";
             }
         } else {
             const recognition = new SpeechRecognition();
-            recognition.lang = "en-IN";
+
             recognition.continuous = false;
             recognition.interimResults = false;
 
             voiceButton.addEventListener("click", function () {
+                recognition.lang = voiceLanguage ? voiceLanguage.value : "kn-IN";
+
                 try {
                     speakAfterAIReply = true;
                     voiceButton.disabled = true;
 
                     if (voiceStatus) {
-                        voiceStatus.textContent =
-                            "Listening... Speak in English 🎤";
+                        voiceStatus.textContent = "Listening... 🎤";
                     }
 
                     recognition.start();
                 } catch (error) {
                     voiceButton.disabled = false;
                     speakAfterAIReply = false;
-
-                    if (voiceStatus) {
-                        voiceStatus.textContent =
-                            "Please wait a moment and try again.";
-                    }
                 }
             });
 
             recognition.onresult = function (event) {
                 const question = event.results[0][0].transcript;
-                const chatInput = document.getElementById("chat-input");
-                const chatForm = document.getElementById("chat-form");
-
-                if (voiceStatus) {
-                    voiceStatus.textContent = "You said: " + question;
-                }
 
                 if (chatInput && chatForm) {
                     chatInput.value = question;
@@ -150,9 +249,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 speakAfterAIReply = false;
 
                 if (voiceStatus) {
-                    voiceStatus.textContent =
-                        "Microphone error: " + event.error +
-                        ". Check microphone permission.";
+                    voiceStatus.textContent = "Microphone error: " + event.error;
                 }
             };
 
@@ -162,140 +259,106 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    if (speakAnswerButton) {
-        speakAnswerButton.addEventListener("click", function () {
-            if (!latestKannadaAnswer) {
-                if (voiceStatus) {
-                    voiceStatus.textContent =
-                        "First ask a question and get an AI answer.";
-                }
-                return;
-            }
-
+    // LISTEN TO AI
+    if (speakButton) {
+        speakButton.addEventListener("click", function () {
             speakKannada(latestKannadaAnswer);
         });
     }
 
-    window.speakAIKannada = speakKannada;
-});
+    // PRONUNCIATION PRACTICE
+    const pronunciationButton =
+        document.getElementById("pronunciation-button");
 
-document.addEventListener("DOMContentLoaded", function () {
+    if (pronunciationButton) {
+        pronunciationButton.addEventListener("click", async function () {
+            const prompt =
+                "Teach me one simple Kannada sentence. Give its meaning and pronunciation guide, then ask me to repeat it.";
 
-    // CHATBOT
-    const chatForm = document.getElementById("chat-form");
-    const chatInput = document.getElementById("chat-input");
-    const chatMessages = document.getElementById("chat-messages");
-    const voiceStatus = document.getElementById("voice-status");
-
-    function addChatMessage(message, type) {
-        if (!chatMessages) return;
-
-        const div = document.createElement("div");
-        div.className = "message " + type;
-        div.textContent = message;
-
-        chatMessages.appendChild(div);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-
-    if (chatForm && chatInput && chatMessages) {
-        chatForm.addEventListener("submit", async function (event) {
-            event.preventDefault();
-
-            const message = chatInput.value.trim();
-            if (!message) return;
-
-            addChatMessage(message, "user-message");
-            chatInput.value = "";
-
-            const sendButton =
-                chatForm.querySelector('button[type="submit"]');
-
-            if (sendButton) {
-                sendButton.disabled = true;
-                sendButton.textContent = "Thinking...";
-            }
+            pronunciationButton.disabled = true;
 
             try {
-                const response = await fetch(
-                    "https://kannada-coonect-ai.onrender.com/api/chat",
-                    {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({ message: message })
-                    }
-                );
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.reply || "AI request failed");
-                }
-
-                const cleanReply = String(data.reply || "")
-                    .replace(/\*\*/g, "")
-                    .replace(/^#+\s*/gm, "");
-
-                if (!cleanReply.trim()) {
-                    throw new Error("AI returned an empty answer.");
-                }
-
-                addChatMessage(cleanReply, "bot-message");
-
-                // Prepare Kannada voice output
-                const lines = cleanReply.split("\n");
-                const kannadaLine = lines.find(function (line) {
-                    return /[\u0C80-\u0CFF]/.test(line);
-                });
-
-                latestKannadaAnswer = kannadaLine
-                    ? kannadaLine.trim()
-                    : cleanReply.trim();
-
-                const speakButton =
-                    document.getElementById("speak-answer");
-
-                if (speakButton) {
-                    speakButton.disabled = !latestKannadaAnswer;
-                }
-
-                if (speakAfterAIReply && latestKannadaAnswer) {
-                    speakAfterAIReply = false;
-
-                    if (window.speakAIKannada) {
-                        window.speakAIKannada(latestKannadaAnswer);
-                    }
-                }
-
-                if (voiceStatus && !speakAfterAIReply) {
-                    voiceStatus.textContent = "AI replied successfully 💜";
-                }
-
+                addChatMessage("Let's practise Kannada! 🎯", "user-message");
+                await sendMessage(prompt, "pronunciation");
             } catch (error) {
-                console.error("AI Chat Error:", error);
-                speakAfterAIReply = false;
-
-                addChatMessage(
-                    "Sorry bro! AI connect ಆಗಿಲ್ಲ. Internet, server status mattu API configuration check maadu.",
-                    "bot-message"
-                );
-
-                if (voiceStatus) {
-                    voiceStatus.textContent =
-                        "AI connection failed. Please try again.";
-                }
+                console.error(error);
+                addChatMessage("Could not start practice. Try again.", "bot-message");
             } finally {
-                if (sendButton) {
-                    sendButton.disabled = false;
-                    sendButton.textContent = "Send ➤";
-                }
+                pronunciationButton.disabled = false;
             }
         });
     }
 
-    // PRACTICE QUIZ
+    // DOCUMENT ASSISTANT
+    const documentUpload = document.getElementById("document-upload");
+    const documentButton = document.getElementById("document-button");
+    const documentStatus = document.getElementById("document-status");
+
+    if (documentButton && documentUpload) {
+        documentButton.addEventListener("click", async function () {
+            const file = documentUpload.files[0];
+
+            if (!file) {
+                showMessage(documentStatus, "Please select a PDF or DOCX file.");
+                return;
+            }
+
+            const extension = file.name.split(".").pop().toLowerCase();
+
+            if (!["pdf", "docx"].includes(extension)) {
+                showMessage(documentStatus, "Only PDF and DOCX are supported.");
+                return;
+            }
+
+            if (file.size > 5 * 1024 * 1024) {
+                showMessage(documentStatus, "Maximum file size is 5 MB.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("document", file);
+            formData.append("message", "Explain this document in simple language and summarise its important points.");
+            formData.append("dialect", dialectSelect ? dialectSelect.value : "standard");
+
+            documentButton.disabled = true;
+            documentButton.textContent = "Analysing...";
+
+            showMessage(documentStatus, "Uploading your document... 📄");
+
+            try {
+                const response = await fetch(API_BASE_URL + "/api/document", {
+                    method: "POST",
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.reply || data.error || "Document processing failed.");
+                }
+
+                const reply = cleanReply(data.reply);
+
+                addChatMessage("Document: " + file.name, "user-message");
+                addChatMessage(reply, "bot-message");
+
+                latestKannadaAnswer = reply;
+
+                if (speakButton) speakButton.disabled = false;
+
+                showMessage(documentStatus, "Document analysed successfully! 💜");
+
+            } catch (error) {
+                console.error("Document error:", error);
+                showMessage(documentStatus, "Error: " + error.message);
+            } finally {
+                documentButton.disabled = false;
+                documentButton.textContent = "Explain My Document";
+            }
+        });
+    }
+
+    // QUIZ
     const quizForm = document.getElementById("quiz-form");
     const quizResult = document.getElementById("quiz-result");
 
@@ -303,17 +366,12 @@ document.addEventListener("DOMContentLoaded", function () {
         quizForm.addEventListener("submit", function (event) {
             event.preventDefault();
 
-            const questions = quizForm.querySelectorAll(
-                ".question-card[data-answer]"
-            );
-
+            const questions = quizForm.querySelectorAll(".question-card[data-answer]");
             let score = 0;
             let answered = 0;
 
             questions.forEach(function (question) {
-                const selected = question.querySelector(
-                    'input[type="radio"]:checked'
-                );
+                const selected = question.querySelector('input[type="radio"]:checked');
 
                 if (selected) {
                     answered++;
@@ -324,58 +382,41 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             });
 
-            if (questions.length === 0) {
+            if (!questions.length) {
                 showMessage(quizResult, "No quiz questions found.");
                 return;
             }
 
             if (answered < questions.length) {
-                showMessage(
-                    quizResult,
-                    "Please answer all questions before submitting."
-                );
+                showMessage(quizResult, "Please answer all questions.");
                 return;
             }
 
             const progress = getProgress();
             const quizId = quizForm.dataset.quizId || location.pathname;
-            const isFirstAttempt =
-                !progress.completedQuizzes.includes(quizId);
+            const firstAttempt = !progress.completedQuizzes.includes(quizId);
 
-            if (isFirstAttempt) {
+            if (firstAttempt) {
                 progress.completedQuizzes.push(quizId);
                 progress.points += score * 5;
                 saveProgress(progress);
             }
 
-            const percentage = Math.round(
-                (score / questions.length) * 100
-            );
+            const percentage = Math.round((score / questions.length) * 100);
 
             showMessage(
                 quizResult,
                 "Your score: " + score + "/" + questions.length +
                 " (" + percentage + "%). " +
-                (score === questions.length
-                    ? "Excellent work! 🎉"
-                    : "Good effort! Keep practising! 💪") +
-                (isFirstAttempt
-                    ? " You earned " + (score * 5) + " points!"
-                    : " Points were already awarded for this quiz.")
+                (firstAttempt ? "Points earned: " + (score * 5) : "Points already awarded.")
             );
 
-            quizForm.querySelectorAll('input[type="radio"]').forEach(
-                function (input) {
-                    input.disabled = true;
-                }
-            );
+            quizForm.querySelectorAll('input[type="radio"]').forEach(function (input) {
+                input.disabled = true;
+            });
 
-            const submitButton =
-                quizForm.querySelector('button[type="submit"]');
-
-            if (submitButton) {
-                submitButton.disabled = true;
-            }
+            const button = quizForm.querySelector('button[type="submit"]');
+            if (button) button.disabled = true;
         });
     }
 
@@ -387,40 +428,25 @@ document.addEventListener("DOMContentLoaded", function () {
         const challengeId = challengeButton.dataset.challengeId ||
             new Date().toISOString().slice(0, 10);
 
-        const progress = getProgress();
-
-        if (progress.completedChallenges.includes(challengeId)) {
+        if (getProgress().completedChallenges.includes(challengeId)) {
             challengeButton.disabled = true;
             challengeButton.textContent = "Challenge Completed ✓";
-
-            showMessage(
-                challengeResult,
-                "You have already completed today's challenge! 🎉"
-            );
+            showMessage(challengeResult, "Challenge already completed! 🎉");
         }
 
         challengeButton.addEventListener("click", function () {
-            const currentProgress = getProgress();
+            const progress = getProgress();
 
-            if (currentProgress.completedChallenges.includes(challengeId)) {
-                showMessage(
-                    challengeResult,
-                    "Challenge already completed!"
-                );
-                return;
-            }
+            if (progress.completedChallenges.includes(challengeId)) return;
 
-            currentProgress.completedChallenges.push(challengeId);
-            currentProgress.points += 10;
-            saveProgress(currentProgress);
+            progress.completedChallenges.push(challengeId);
+            progress.points += 10;
+            saveProgress(progress);
 
             challengeButton.disabled = true;
             challengeButton.textContent = "Challenge Completed ✓";
 
-            showMessage(
-                challengeResult,
-                "Awesome! You earned 10 points! 🏆"
-            );
+            showMessage(challengeResult, "You earned 10 points! 🏆");
         });
     }
 
@@ -431,23 +457,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (!button) return;
 
-        const progress = getProgress();
-
-        if (progress.learnedLessons.includes(lessonId)) {
+        if (getProgress().learnedLessons.includes(lessonId)) {
             button.disabled = true;
             button.textContent = "Lesson Completed ✓";
         }
 
         button.addEventListener("click", function () {
-            const currentProgress = getProgress();
+            const progress = getProgress();
 
-            if (currentProgress.learnedLessons.includes(lessonId)) {
-                return;
-            }
+            if (progress.learnedLessons.includes(lessonId)) return;
 
-            currentProgress.learnedLessons.push(lessonId);
-            currentProgress.points += 5;
-            saveProgress(currentProgress);
+            progress.learnedLessons.push(lessonId);
+            progress.points += 5;
+            saveProgress(progress);
 
             button.disabled = true;
             button.textContent = "Lesson Completed ✓";
@@ -464,26 +486,13 @@ document.addEventListener("DOMContentLoaded", function () {
     function updateProgressDashboard() {
         const progress = getProgress();
 
-        if (pointsDisplay) {
-            pointsDisplay.textContent = progress.points;
-        }
-
-        if (challengeDisplay) {
-            challengeDisplay.textContent =
-                progress.completedChallenges.length;
-        }
-
-        if (quizDisplay) {
-            quizDisplay.textContent = progress.completedQuizzes.length;
-        }
-
-        if (lessonDisplay) {
-            lessonDisplay.textContent = progress.learnedLessons.length;
-        }
+        if (pointsDisplay) pointsDisplay.textContent = progress.points;
+        if (challengeDisplay) challengeDisplay.textContent = progress.completedChallenges.length;
+        if (quizDisplay) quizDisplay.textContent = progress.completedQuizzes.length;
+        if (lessonDisplay) lessonDisplay.textContent = progress.learnedLessons.length;
 
         if (progressFill) {
-            const percentage = Math.min(progress.points, 100);
-            progressFill.style.width = percentage + "%";
+            progressFill.style.width = Math.min(progress.points, 100) + "%";
         }
     }
 

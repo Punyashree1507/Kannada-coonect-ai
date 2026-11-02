@@ -1,23 +1,23 @@
- <!DOCTYPE html>
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet" href="style.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kannada AI Chat | Kannada Connect AI</title>
+    <title>NEXUS AI Assistant | Kannada Connect AI</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<button class="back-btn" onclick="history.back()">← Back</button>
+
 <header>
-    <h1>🤖 Kannada AI Chat</h1>
-    <p>ಕನ್ನಡದಲ್ಲಿ ಮಾತನಾಡೋಣ! Let's speak Kannada!</p>
+    <h1>🤖 NEXUS</h1>
+    <p>Your Smart Kannada AI Assistant 💜</p>
 </header>
 
 <nav>
     <a href="index.html">Home</a>
     <a href="learn.html">Learn</a>
-    <a href="chat.html">AI Chat</a>
+    <a href="chat.html">AI Assistant</a>
     <a href="practice.html">Practice</a>
     <a href="challenge.html">Challenge</a>
     <a href="progress.html">Progress</a>
@@ -26,18 +26,27 @@
 <main class="container">
 
     <section class="page-title">
-        <h2>ನಿಮ್ಮ ಕನ್ನಡ ಸ್ನೇಹಿತ 💜</h2>
-        <p>Practice simple Kannada conversations in a friendly environment.</p>
+        <h2>Chat with NEXUS 💬</h2>
+        <p>Talk or type in Kannada, Kanglish or English.</p>
     </section>
 
     <section class="chat-box">
 
+        <div class="nexus-tools">
+            <label for="dialect-select">Kannada dialect:</label>
+            <select id="dialect-select">
+                <option value="standard">Standard Kannada</option>
+                <option value="mysuru">Mysuru Kannada</option>
+                <option value="north">North Karnataka Kannada</option>
+                <option value="coastal">Coastal Karnataka Kannada</option>
+            </select>
+        </div>
+
         <div class="chat-messages" id="chat-messages" aria-live="polite">
             <div class="message bot-message">
-                ನಮಸ್ಕಾರ! 🙏 Welcome to Kannada Connect AI!<br><br>
-                Ask me about Kannada greetings, food, water, friendship and everyday words.
-                <br><br>
-                Try typing: "Hello", "What is water in Kannada?" or "Thank you".
+                ನಮಸ್ಕಾರ! 🙏 I'm NEXUS, your AI assistant.
+                You can talk to me or type your questions.
+                Let's start chatting! 💜
             </div>
         </div>
 
@@ -45,57 +54,49 @@
             <input
                 type="text"
                 id="chat-input"
-                placeholder="Type your message here..."
-                aria-label="Your message"
+                placeholder="Message NEXUS..."
                 autocomplete="off"
                 required
             >
             <button type="submit">Send ➤</button>
         </form>
-        <div class="voice-assistant">
-    <h3>🎙️ AI Voice Assistant</h3>
-    <p>Ask your question in English and learn in Kannada!</p>
 
-    <button type="button" id="voice-button">
-        🎤 Speak in English
-    </button>
+        <div class="voice-section">
+            <h3>🎙️ NEXUS Voice Assistant</h3>
 
-    <p id="voice-status" aria-live="polite"></p>
+            <div class="voice-circle" id="voice-circle">
+                <span>🎤</span>
+            </div>
 
-    <button type="button" id="speak-answer" disabled>
-        🔊 Listen in Kannada
-    </button>
-</div>
+            <p id="voice-status">
+                Tap Start Voice to talk with NEXUS.
+            </p>
 
-        <p style="margin-top: 15px; font-size: 13px; color: #625f78;">
-            Note: This demo currently uses predefined responses and does not require an internet connection after the page loads.
+            <div class="voice-buttons">
+                <button type="button" id="voice-start-button">
+                    🎙️ Start Voice
+                </button>
+
+                <button type="button" id="voice-stop-button" disabled>
+                    ⏹ End Voice
+                </button>
+            </div>
+        </div>
+
+        <p class="chat-hint">
+            NEXUS automatically responds in the language you use.
         </p>
-
-    </section>
-
-    <section class="cards" style="margin-top: 25px;">
-
-        <div class="card">
-            <h3>👋 Greetings</h3>
-            <p>Namaskara — Hello</p>
-            <p>Dhanyavadagalu — Thank you</p>
-        </div>
-
-        <div class="card">
-            <h3>🍚 Everyday Words</h3>
-            <p>Neeru — Water</p>
-            <p>Oota — Food / Meal</p>
-        </div>
 
     </section>
 
 </main>
 
 <footer>
-    <p>Kannada Connect AI | Learn • Practice • Connect ❤️</p>
+    <p>NEXUS | Kannada Connect AI ❤️</p>
 </footer>
 
 <script src="script.js"></script>
+<script src="voice.js"></script>
 
 </body>
 </html>
